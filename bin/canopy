@@ -8,10 +8,11 @@ var canopy = require('../lib/canopy'),
 
 var BUILDERS = {};
 
-BUILDERS.java                     = canopy.builders.java;
-BUILDERS.js = BUILDERS.javascript = canopy.builders.javascript;
-BUILDERS.py = BUILDERS.python     = canopy.builders.python;
-BUILDERS.rb = BUILDERS.ruby       = canopy.builders.ruby;
+BUILDERS.java                      = canopy.builders.java;
+BUILDERS.js  = BUILDERS.javascript = canopy.builders.javascript;
+BUILDERS.erl = BUILDERS.erlang     = canopy.builders.erlang;
+BUILDERS.py  = BUILDERS.python     = canopy.builders.python;
+BUILDERS.rb  = BUILDERS.ruby       = canopy.builders.ruby;
 
 try {
   var options   = nopt({lang: String}, {l: '--lang'}),

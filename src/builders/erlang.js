@@ -23,10 +23,9 @@ Builder.create = function(filename) {
 };
 
 util.assign(Builder.prototype, {
-
-  // yep
   comment: function(lines) {
-    return lines.map(function(line) { return '% ' + line });
+    lines = lines.map(function(line) { return ' * ' + line });
+    return ['/**'].concat(lines).concat([' */']);
   },
 
   serialize: function() {
@@ -35,7 +34,6 @@ util.assign(Builder.prototype, {
     return files;
   },
 
-  // yep
   _outputPathname: function() {
     return this.filename.replace(/\.peg$/, '.erl');
   },
@@ -45,30 +43,24 @@ util.assign(Builder.prototype, {
     this._buffer += string;
   },
 
-  // yep
   _indent: function(block, context) {
     this._indentLevel += 1;
     block.call(context, this);
     this._indentLevel -= 1;
   },
 
-  // yep
   _newline: function() {
     this._write('\n');
   },
 
-  // almost yep
-  // handle period first
   _line: function(source, semicolon) {
     var i = this._indentLevel;
     while (i--) this._write('  ');
     this._write(source);
-    if (semicolon !== false) this._write(',');    // needs to handle period at end instead of comma
+    if (semicolon !== false) this._write(';');
     this._newline();
   },
 
-  // should these be binaries?
-  // yup, for now
   _quote: function(string) {
     string = string.replace(/\\/g, '\\\\')
                    .replace(/'/g, "\\'")
@@ -79,7 +71,7 @@ util.assign(Builder.prototype, {
                    .replace(/\f/g, '\\f')
                    .replace(/\r/g, '\\r');
 
-    return '"' + string + '"';
+    return "'" + string + "'";
   },
 
   package_: function(name, block, context) {
@@ -100,7 +92,6 @@ util.assign(Builder.prototype, {
     this._line('})()');
   },
 
-  // yep
   syntaxNodeClass_: function() {
     var name = 'TreeNode';
     this.function_('var ' + name, ['text', 'offset', 'elements'], function(builder) {
