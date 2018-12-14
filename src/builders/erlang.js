@@ -29,36 +29,45 @@ util.assign(Builder.prototype, {
     return lines.map(function(line) { return '% ' + line });
   },
 
+  // think this stays unchanged?  same in js and python
+  // probably yep
   serialize: function() {
     var files = {};
     files[this._outputPathname()] = this._buffer;
     return files;
   },
 
+  // yep
   _outputPathname: function() {
     return this.filename.replace(/\.peg$/, '.erl');
   },
 
+  // think this stays unchanged?  same in js and python
+  // probably yep
   _write: function(string) {
     if (this._parent) return this._parent._write(string);
     this._buffer += string;
   },
 
+  // think this stays unchanged?  same in js and python
+  // probably yep
   _indent: function(block, context) {
     this._indentLevel += 1;
     block.call(context, this);
     this._indentLevel -= 1;
   },
 
+  // yep
   _newline: function() {
     this._write('\n');
   },
 
+  // needs work to handle , vs .
   _line: function(source, semicolon) {
     var i = this._indentLevel;
     while (i--) this._write('  ');
     this._write(source);
-    if (semicolon !== false) this._write(';');
+    if (semicolon !== false) this._write(',');
     this._newline();
   },
 
