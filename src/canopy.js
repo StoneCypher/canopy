@@ -4,6 +4,7 @@ var Compiler = require('./compiler');
 
 module.exports = {
   builders: {
+    erlang:     require('./builders/erlang'),
     java:       require('./builders/java'),
     javascript: require('./builders/javascript'),
     python:     require('./builders/python'),
