@@ -23,9 +23,10 @@ Builder.create = function(filename) {
 };
 
 util.assign(Builder.prototype, {
+
+  // yep
   comment: function(lines) {
-    lines = lines.map(function(line) { return ' * ' + line });
-    return ['/**'].concat(lines).concat([' */']);
+    return lines.map(function(line) { return '% ' + line });
   },
 
   serialize: function() {
