@@ -223,7 +223,8 @@ util.assign(Builder.prototype, {
   attributes_: function() {},
 
   attribute_: function(name, value) {
-    this.assign_("this['" + name + "']", value);
+//  this.assign_("this['" + name + "']", value);
+    this.assign_(name, value);
   },
 
   localVars_: function(vars) {
@@ -302,7 +303,7 @@ util.assign(Builder.prototype, {
   },
 
   assign_: function(name, value) {
-    this._line(name + ' = ' + value);
+    this._line('put("' + name + '", ' + value + ')');
   },
 
   jump_: function(address, rule) {
