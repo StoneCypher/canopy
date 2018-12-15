@@ -71,6 +71,8 @@ util.assign(Builder.prototype, {
     this._newline();
   },
 
+  // should these be binaries?
+  // maybe yep
   _quote: function(string) {
     string = string.replace(/\\/g, '\\\\')
                    .replace(/'/g, "\\'")
@@ -81,25 +83,19 @@ util.assign(Builder.prototype, {
                    .replace(/\f/g, '\\f')
                    .replace(/\r/g, '\\r');
 
-    return "'" + string + "'";
+    return '"' + string + '"';
   },
 
+  // maybe yep
   package_: function(name, block, context) {
-    this._line('(function() {', false);
-    this._indent(function(builder) {
-      builder._line("'use strict'");
+    this._line('-module(' + name + ').', false);
+    this._newline();
 
-      builder._newline();
-      builder._line('var extend = ' + util.assign.toString());
-      builder._newline();
-      builder._line('var formatError = ' + util.formatError.toString());
-      builder._newline();
-      builder._line('var inherit = ' + util.inherit.toString());
+    this._line('-export([ grammar/0, parser/0, parse/0 ]).', false);
+    this._newline();
 
-      this._grammarName = name;
-      block.call(context, this);
-    }, this);
-    this._line('})()');
+    this._grammarName = name;
+    block.call(context, this);
   },
 
   syntaxNodeClass_: function() {
@@ -167,32 +163,9 @@ util.assign(Builder.prototype, {
     this._newline();
   },
 
-  exports_: function() {
-    var grammar   = this._grammarName,
-        namespace = grammar.split('.'),
-        last      = namespace.pop(),
-        n         = namespace.length,
-        condition = [];
-
-    for (var i = 0; i < n; i++)
-      condition.push('typeof ' + namespace.slice(0,i+1).join('.') + " !== 'undefined'");
-
-    this.assign_('var exported', '{Grammar: Grammar, Parser: Parser, parse: parse}');
-    this._newline();
-
-    this.if_("typeof require === 'function' && typeof exports === 'object'", function(builder) {
-      builder._line('extend(exports, exported)');
-      if (condition.length > 0) builder.if_(condition.join(' &&' ), function(builder) {
-        builder.assign_(grammar, 'exported');
-      });
-    }, function(builder) {
-      builder.assign_('var namespace', "typeof this !== 'undefined' ? this : window");
-      for (var i = 0; i < n; i++) {
-        builder.assign_('namespace', 'namespace.' + namespace[i] + ' = namespace.' + namespace[i] + ' || {}');
-      }
-      builder.assign_('namespace.' + last, 'exported');
-    });
-  },
+  // maybe yep
+  // i think this doesn't actually need to exist in erl, because of the export statement in package above
+  exports_: function() {},
 
   class_: function(name, parent, block, context) {
     var builder = new Builder(this, name, parent);
@@ -207,11 +180,14 @@ util.assign(Builder.prototype, {
     this._line('inherit(' + this._name + ', ' + this._parentName + ')');
   },
 
+  // almost yep
+  // doesn't end on periods correctly
   function_: function(name, args, block, context) {
     this._newline();
-    this._line(name + ' = function(' + args.join(', ') + ') {', false);
+    this._line(name + '(' + args.join(', ') + ') ->', false);
     new Builder(this, this._name, this._parentName)._indent(block, context);
-    this._line('}');
+    this._line('.', false);
+    this._newline();
   },
 
   method_: function(name, args, block, context) {
