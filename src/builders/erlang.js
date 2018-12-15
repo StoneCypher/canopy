@@ -99,6 +99,9 @@ util.assign(Builder.prototype, {
     this._line('-export([ grammar/0, parser/0, parse/0 ]).', false);
     this._newline();
 
+    this._line('swap_nth(List, ZeroOfs, NewVal) -> lists:sublist(List, ZeroOfs) ++ [NewVal] ++ lists:nthtail(ZeroOfs+1, List).', false);
+    this._newline();
+
     this._grammarName = name;
     block.call(context, this);
   },
@@ -403,29 +406,35 @@ util.assign(Builder.prototype, {
     return string + ' !== null && /' + regex.source + '/.test(' + string + ')';
   },
 
+  // yep?
   return_: function(expression) {
-    this._line('return ' + expression);
+    this._line(expression, false);
   },
 
   arrayLookup_: function(expression, offset) {
-    return expression + '[' + offset + ']';
+    return 'lists:nth(' + expression + ', ' + (offset+1) + ')';
   },
 
+  // mmmmmmaybe?
   append_: function(list, value, index) {
     if (index === undefined)
-      this._line(list + '.push(' + value + ')');
+      this._line('put(' + list + ', get(' + list + ') ++ [' + value + '])');
     else
-      this._line(list + '[' + index + '] = ' + value);
+      this._line('put(' + list + ', swap_nth(get(' + list + '), ' + index + ', ' + value + ')');
   },
 
+  // yep?
   decrement_: function(variable) {
-    this._line('--' + variable);
+    this._line('put(' + variable + ', get(' + variable + ' - 1))');
   },
 
+  // why is this called isZero when it's le zero? :/
+  // yep?
   isZero_: function(expression) {
     return expression + ' <= 0';
   },
 
+  // yep?
   hasChars_: function() {
     return '(get(offset) < get(input_size))';
   },
@@ -434,22 +443,27 @@ util.assign(Builder.prototype, {
     return 'FAILURE';
   },
 
+  // yep?
   offset_: function() {
     return 'get(offset)';
   },
 
+  // maybe yes?
   emptyList_: function(size) {
     return size ? "lists:repeat('_', " + size + ")" : '[]';
   },
 
+  // yep
   emptyString_: function() {
     return '""';
   },
 
+  // yep
   true_: function() {
     return 'true';
   },
 
+  // yep
   null_: function() {
     return 'null';
   }
