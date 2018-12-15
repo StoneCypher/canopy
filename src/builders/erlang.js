@@ -1,7 +1,9 @@
 'use strict';
 
+// yep
 var util = require('../util');
 
+// probably yep
 var Builder = function(parent, name, parentName) {
   if (parent) {
     this._parent = parent;
@@ -16,12 +18,14 @@ var Builder = function(parent, name, parentName) {
   this._varIndex = {};
 };
 
+// probably yep
 Builder.create = function(filename) {
   var builder = new Builder();
   builder.filename = filename;
   return builder;
 };
 
+// yep
 util.assign(Builder.prototype, {
 
   // yep
@@ -98,10 +102,13 @@ util.assign(Builder.prototype, {
     block.call(context, this);
   },
 
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
   syntaxNodeClass_: function() {
     var name = 'TreeNode';
     this.function_('var ' + name, ['text', 'offset', 'elements'], function(builder) {
-      builder._line('this.text = text');
+      builder._line('put(text, text)');
       builder._line('this.offset = offset');
       builder._line('this.elements = elements || []');
     });
@@ -115,6 +122,9 @@ util.assign(Builder.prototype, {
     return name;
   },
 
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
   grammarModule_: function(actions, block, context) {
     this._newline();
     this.assign_('var ' + this.nullNode_(), '{}');
@@ -125,8 +135,12 @@ util.assign(Builder.prototype, {
     this._line('}');
   },
 
+  // was empty errywhere.  prolly yep?  erl doesn't need precompiled regex
   compileRegex_: function() {},
 
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
   parserClass_: function(root) {
     this.function_('var Parser', ['input', 'actions', 'types'], function(builder) {
       builder.assign_('this._input', 'input');
@@ -167,12 +181,14 @@ util.assign(Builder.prototype, {
   // i think this doesn't actually need to exist in erl, because of the export statement in package above
   exports_: function() {},
 
+  // probably yep
   class_: function(name, parent, block, context) {
     var builder = new Builder(this, name, parent);
     block.call(context, builder);
   },
 
   constructor_: function(args, block, context) {
+    this._line('%%% WAT constructor_');
     this.function_('var ' + this._name, args, function(builder) {
       builder._line(this._parentName + '.apply(this, arguments)');
       block.call(context, builder);
@@ -186,26 +202,30 @@ util.assign(Builder.prototype, {
     this._newline();
     this._line(name + '(' + args.join(', ') + ') ->', false);
     new Builder(this, this._name, this._parentName)._indent(block, context);
-    this._line('.', false);
+    this._line('.', false);  // todo this might go away when we learn to special case a last line
     this._newline();
   },
 
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
   method_: function(name, args, block, context) {
+    this._line('%%% WAT method_');
     this._write(this._methodSeparator);
     this._methodSeparator = ',\n\n';
-    this._line(name + ': function(' + args.join(', ') + ') {', false);
+    this._line(name + '(' + args.join(', ') + ') ->', false);
     new Builder(this)._indent(block, context);
     var n = this._indentLevel;
     while (n--) this._write('  ');
-    this._write('}');
+    this._write('.');
   },
 
   cache_: function(name, block, context) {
     var temp      = this.localVars_({address: this.nullNode_(), index: 'this._offset'}),
         address   = temp.address,
         offset    = temp.index,
-        cacheMap  = 'this._cache._' + name,
-        cacheAddr = cacheMap + '[' + offset + ']';
+        cacheMap  = '_cache_' + name,
+        cacheAddr = '{ ' + cacheMap + ', ' + offset + '}';
 
     this.assign_(cacheMap, cacheMap + ' || {}');
     this.assign_('var cached', cacheAddr);
@@ -303,7 +323,7 @@ util.assign(Builder.prototype, {
   },
 
   assign_: function(name, value) {
-    this._line('put("' + name + '", ' + value + ')');
+    this._line('put(' + name + ', ' + value + ')');
   },
 
   jump_: function(address, rule) {
