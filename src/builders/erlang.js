@@ -71,7 +71,8 @@ util.assign(Builder.prototype, {
     var i = this._indentLevel;
     while (i--) this._write('  ');
     this._write(source);
-    if (semicolon !== false) this._write(',');
+    if      (semicolon ===  '.' ) { this._write('.')  }
+    else if (semicolon !== false) { this._write(','); }
     this._newline();
   },
 
@@ -149,29 +150,30 @@ util.assign(Builder.prototype, {
   // NOEP NOEP NOEP
   parserClass_: function(root) {
     this._line('%%% WAT parserClass_');
-    this.function_('var Parser', ['input', 'actions', 'types'], function(builder) {
-      builder.assign_('this._input', 'input');
+    this.function_('parser', ['input', 'actions', 'types'], function(builder) {
+      builder.assign_('input', 'input');
       builder.assign_('input_size', 'input.length');
-      builder.assign_('this._actions', 'actions');
-      builder.assign_('this._types', 'types');
+      builder.assign_('actions', 'actions');
+      builder.assign_('types', 'types');
       builder.assign_('offset', '0');
-      builder.assign_('this._cache', '{}');
-      builder.assign_('this._failure', '0');
-      builder.assign_('this._expected', '[]');
+      builder.assign_('failure', '0');
+      builder.assign_('expected', '[]', '.');
     });
 
-    this.function_('Parser.prototype.parse', [], function(builder) {
+    // was Parser.prototype.parse
+    this.function_('parser_parse', [], function(builder) {
       builder.jump_('var tree', root);
 
       builder.if_('tree !== ' + builder.nullNode_() + ' && ((get(offset) === get(input_size))', function(builder) {
         builder.return_('tree');
       });
-      builder.if_('this._expected.length === 0', function(builder) {
-        builder.assign_('this._failure', 'get(offset)');
-        builder.append_('this._expected', "'<EOF>'");
+      builder.if_('get(expected).length === 0', function(builder) {
+        builder.assign_('failure', 'get(offset)');
+        builder.append_('expected', "'<EOF>'");
       });
-      builder.assign_('this.constructor.lastError', '{offset: get(offset), expected: this._expected}');
-      builder._line('throw new SyntaxError(formatError(this._input, this._failure, this._expected))');
+      // todo sort out this.constructor.lastError
+      builder.assign_('this.constructor.lastError', '{offset: get(offset), expected: get(expected)}');
+      builder._line('throw new SyntaxError(formatError(get(input), get(failure), get(expected) ))');
     });
 
     this.function_('var parse', ['input', 'options'], function(builder) {
@@ -195,12 +197,10 @@ util.assign(Builder.prototype, {
   },
 
   constructor_: function(args, block, context) {
-    this._line('%%% WAT constructor_');
-    this.function_('var ' + this._name, args, function(builder) {
+    this.function_(this._name, args, function(builder) {
       builder._line(this._parentName + '.apply(this, arguments)');
       block.call(context, builder);
     }, this);
-    this._line('inherit(' + this._name + ', ' + this._parentName + ')');
   },
 
   // almost yep
@@ -233,7 +233,7 @@ util.assign(Builder.prototype, {
     var temp      = this.localVars_({address: this.nullNode_(), index: 'get(offset)'}),  // lol what
         address   = temp.address,
         offset    = temp.index,
-        cacheMap  = '_cache_' + name,
+        cacheMap  = 'cache_' + name,
         cacheAddr = '{ ' + cacheMap + ', ' + offset + '}';
 
     this.assign_(cacheMap, cacheMap + ' || {}');
@@ -249,13 +249,18 @@ util.assign(Builder.prototype, {
     this.return_(address);
   },
 
+  // probably yep
   attributes_: function() {},
 
+  // probably yep
   attribute_: function(name, value) {
 //  this.assign_("this['" + name + "']", value);
     this.assign_(name, value);
   },
 
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
   localVars_: function(vars) {
     var names = {}, code = [], varName;
     for (var name in vars) {
@@ -269,16 +274,19 @@ util.assign(Builder.prototype, {
     return names;
   },
 
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
+  // NOEP NOEP NOEP
   localVar_: function(name, value) {
     this._varIndex[name] = this._varIndex[name] || 0;
     var varName = name + this._varIndex[name];
     this._varIndex[name] += 1;
-    this.assign_('var ' + varName, (value === undefined) ? this.nullNode_() : value);
+    this.assign_(varName, (value === undefined) ? this.nullNode_() : value);
     return varName;
   },
 
   chunk_: function(length) {
-    var chunk = this.localVar_('chunk', this.null_()), input = 'this._input', of = 'get(offset)';
+    var chunk = this.localVar_('chunk', this.null_()), input = 'get(input)', of = 'get(offset)';
     this.if_(of + ' < (get(input_size))', function(builder) {
       builder._line(chunk + ' = ' + input + '.substring(' + of + ', ' + of + ' + ' + length + ')');
     });
@@ -289,11 +297,11 @@ util.assign(Builder.prototype, {
     var args;
 
     if (action) {
-      action = 'this._actions.' + action;
-      args   = ['this._input', start, end];
+      action = 'get(actions).' + action;
+      args   = ['get(input)', start, end];
     } else {
       action = 'new ' + (nodeClass || 'TreeNode');
-      args   = ['this._input.substring(' + start + ', ' + end + ')', start];
+      args   = ['get(input).substring(' + start + ', ' + end + ')', start];
     }
     if (elements) args.push(elements);
 
@@ -315,28 +323,30 @@ util.assign(Builder.prototype, {
 
   extendNode_: function(address, nodeType) {
     if (!nodeType) return;
-    this._line('extend(' + address + ', this._types.' + nodeType + ')');
+    this._line('extend(' + address + ', get(types)' + nodeType + ')');
   },
 
   failure_: function(address, expected) {
     expected = this._quote(expected);
     this.assign_(address, this.nullNode_());
 
-    this.if_('get(offset) > this._failure', function(builder) {
-      builder.assign_('this._failure', 'get(offset)');
-      builder.assign_('this._expected', '[]');
+    this.if_('get(offset) > get(failure)', function(builder) {
+      builder.assign_('failure', 'get(offset)');
+      builder.assign_('get(expected)', '[]');
     });
-    this.if_('get(offset) === this._failure', function(builder) {
-      builder.append_('this._expected', expected);
+    this.if_('get(offset) === get(failure)', function(builder) {
+      builder.append_('get(expected)', expected);
     });
   },
 
-  assign_: function(name, value) {
-    this._line('put(' + name + ', ' + value + ')');
+  assign_: function(name, value, line_ending) {
+    this._line('put(' + name + ', ' + value + ')', line_ending);
   },
 
   jump_: function(address, rule) {
-    this.assign_(address, 'this._read_' + rule + '()');
+    // todo what to do about `this._read_${rule}()`
+//  this.assign_(address, 'this._read_' + rule + '()');
+    this.assign_(address, 'read_' + rule + '()');
   },
 
   conditional_: function(kwd, condition, block, else_, context) {
@@ -353,8 +363,27 @@ util.assign(Builder.prototype, {
     this._line('}', false);
   },
 
+  // todo
+  // soooooorta working
   if_: function(condition, block, else_, context) {
-    this.conditional_('if', condition, block, else_, context);
+    // it's erlang, so we're actually implementing it as a case
+    this._line('if', false);
+    this._indent(builder => {
+      builder._line(condition + ' ->', false);
+      this._indent(builder2 => {
+        builder2._line(block + ';', false);
+      });
+    });
+    if (else_) {
+      this._indent(builder => {
+        builder._line('true ->', false);
+        this._indent(builder2 => {
+          builder2._line(else_, false);
+        });
+      });
+    }
+    this._line('end');
+//    this.conditional_('if', condition, block, else_, context);
   },
 
   whileNotNull_: function(expression, block, context) {
